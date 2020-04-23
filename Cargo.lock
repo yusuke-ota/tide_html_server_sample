@@ -904,6 +904,7 @@ name = "tide_web_server"
 version = "0.1.0"
 dependencies = [
  "async-std",
+ "mime",
  "tide",
 ]
 

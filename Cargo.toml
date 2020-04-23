@@ -7,8 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tide = "0.6.0"
+tide = "0.6"
+mime = "0.3"
 
 [dependencies.async-std]
-version = "1.5.0"
+version = "1.5"
 features = ["attributes"]
