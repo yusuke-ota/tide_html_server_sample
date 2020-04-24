@@ -1,5 +1,5 @@
 [package]
-name = "tide_web_server"
+name = "tide_html_server_sample"
 version = "0.1.0"
 authors = ["yusuke ota <33338085+yusuke-ota@users.noreply.github.com>"]
 edition = "2018"
@@ -7,8 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tide = "0.6"
+tide = "0.7"
 mime = "0.3"
+http-types = "1.2"
 
 [dependencies.async-std]
 version = "1.5"
