@@ -6,16 +6,17 @@ use http_types::StatusCode;
 async fn main() -> Result<(), std::io::Error> {
     let mut app = tide::new();
     // 同じコード / same code
-    // app.at("/").get(|_| async move{ "hello".to_string()};
+    // app.at("/").get(|_| async move{ Ok("hello".to_string())});
     app.at("/").get(hello);
 
     // 同じコード / same code
     // app.at("/hello").get( |_| async move {
     //     let file = File::open("hello.html").await.unwrap();
     //     let reader = BufReader::new(file);
-    //     tide::Response::new(200)
+    //     let res = tide::Response::new(StatusCode::Ok)
     //         .body(reader)
-    //         .set_mime(mime::TEXT_HTML)
+    //         .set_mime(mime::TEXT_HTML);
+    //     Ok(res)
     // });
     app.at("/hello").get(hello_html);
 
@@ -24,23 +25,25 @@ async fn main() -> Result<(), std::io::Error> {
     Ok(())
 }
 
-async fn hello(_req: tide::Request<()>) -> String {
-    "hello".to_string()
+async fn hello(_req: tide::Request<()>) -> Result<String, tide::Error> {
+    Ok("hello".to_string())
 }
 
-async fn hello_html(_req: tide::Request<()>) -> tide::Response{
+async fn hello_html(_req: tide::Request<()>) -> Result<tide::Response, tide::Error>{
     let file = File::open("hello.html").await.unwrap();
     let reader = BufReader::new(file);
-    tide::Response::new(StatusCode::Ok)
+    let res = tide::Response::new(StatusCode::Ok)
         .body(reader)
         // MIMEについてはこちらのサイト参照About MIME, Read here.
         // https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/MIME_types
         // About MIME, Read here.
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
-        .set_mime(mime::TEXT_HTML)
+        .set_mime(mime::TEXT_HTML);
+    Ok(res)
 }
 
-async fn not_found(_req: tide::Request<()>) -> tide::Response{
-    tide::Response::new(StatusCode::NotFound)
-        .body_string("Not Found".to_string())
+async fn not_found(_req: tide::Request<()>) -> Result<tide::Response, tide::Error>{
+    let res = tide::Response::new(StatusCode::NotFound)
+        .body_string("Not Found".to_string());
+    Ok(res)
 }

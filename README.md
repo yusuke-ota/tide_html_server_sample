@@ -3,7 +3,7 @@
 ## dependencies
 
 [dependencies]  
-tide = "0.7"  
+tide = "0.8"  
 mime = "0.3"  
 http-types = "1.2"
 
