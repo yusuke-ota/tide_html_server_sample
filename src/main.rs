@@ -34,7 +34,7 @@ async fn hello_html(_req: tide::Request<()>) -> Result<tide::Response, tide::Err
     let reader = BufReader::new(file);
     let res = tide::Response::new(StatusCode::Ok)
         .body(reader)
-        // MIMEについてはこちらのサイト参照About MIME, Read here.
+        // MIMEについてはこちらのサイト参照 / About MIME, Read here.
         // https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/MIME_types
         // About MIME, Read here.
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types
