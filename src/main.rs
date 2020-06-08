@@ -1,5 +1,5 @@
+use tide::http::{mime, StatusCode};
 use tide::Body;
-use tide::http::{StatusCode, mime};
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -17,14 +17,14 @@ async fn hello(_req: tide::Request<()>) -> Result<String, tide::Error> {
     Ok("hello".to_string())
 }
 
-async fn hello_html(_req: tide::Request<()>) -> Result<tide::Response, tide::Error>{
+async fn hello_html(_req: tide::Request<()>) -> Result<tide::Response, tide::Error> {
     let mut res = tide::Response::new(StatusCode::Ok);
     let body = Body::from_file("hello.html").await?;
     res.set_body(body);
     Ok(res)
 }
 
-async fn not_found(_req: tide::Request<()>) -> Result<tide::Response, tide::Error>{
+async fn not_found(_req: tide::Request<()>) -> Result<tide::Response, tide::Error> {
     let mut res = tide::Response::new(StatusCode::NotFound);
     let body = Body::from_string("Not Found".to_string());
     res.set_body(body);
@@ -35,10 +35,13 @@ async fn hello_html_from_template(req: tide::Request<()>) -> Result<tide::Respon
     let mut res = tide::Response::new(StatusCode::Ok);
 
     // 'tide::Server.at(*/:name)'の形でルーティングしている場合に、:nameの値を取得する
+    // 'tide::Server.at(*/:name)' when routing in the form Get the value of :name.
     // :nameがある場合、&str.parse::<String> (= &str.to_string())は必ず成功する。
+    // When ':name' is exist, '&str.parse::<String>' ('= &str. to_string()') always succeed.
     let name = req.param::<String>("name")?;
 
-    // Endpoint内でのerrorはStatus Code 500に変換される
+    // Endpointにerrorが伝播するとResponse::new(StatusCode::InternalServerError)が返る
+    // When the error is propagated to Endpoint, Response::new( StatusCode::InternalServerError) is returned.
     let html_body = generate_html(name).unwrap();
     let body = Body::from_string(html_body);
     res.set_body(body);
@@ -46,22 +49,20 @@ async fn hello_html_from_template(req: tide::Request<()>) -> Result<tide::Respon
     Ok(res)
 }
 
-
 // htmlをテンプレートエンジンで生成します。
-// generate html from template engine
+// Generate html with the template engine.
 // この関数を利用するために、'serde' and 'tinytemplate'クレートが必要です。
-// require 'serde' and 'tinytemplate' as extern crate
-use tinytemplate::TinyTemplate;
-use std::error::Error;
+// In order to use this function, the 'serde' and 'tinytemplate' crates are added to 'extern crate'.
 use serde::Serialize;
+use std::error::Error;
+use tinytemplate::TinyTemplate;
 
 #[derive(Serialize)]
 struct Context {
     name: String,
 }
 
-const HTML_TEMPLATE: &'static str =
-    "<!DOCTYPE html>
+const HTML_TEMPLATE: &'static str = "<!DOCTYPE html>
     <html lang=\"en\">
         <head>
             <meta charset=\"UTF-8\">
@@ -77,9 +78,7 @@ pub fn generate_html(name: String) -> Result<String, Box<dyn Error>> {
     let mut template = TinyTemplate::new();
     template.add_template("hello_rust_template", HTML_TEMPLATE)?;
 
-    let context = Context {
-        name,
-    };
+    let context = Context { name };
 
     let rendered = template.render("hello_rust_template", &context)?;
     Ok(rendered)
