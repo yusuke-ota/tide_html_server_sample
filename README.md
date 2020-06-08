@@ -3,12 +3,12 @@
 ## dependencies
 
 [dependencies]  
-tide = "0.8"  
-mime = "0.3"  
-http-types = "1.2"
+tide = "0.10"  
+tinytemplate = "1.1"
+serde = "1.0"
 
 [dependencies.async-std]  
-version = "1.5"  
+version = "1.6"  
 features = ["attributes"]
 
 ## what is this?
