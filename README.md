@@ -4,7 +4,7 @@
 
 [dependencies]  
 tide = "0.10"  
-tinytemplate = "1.1"
+tinytemplate = "1.1"  
 serde = "1.0"
 
 [dependencies.async-std]  
