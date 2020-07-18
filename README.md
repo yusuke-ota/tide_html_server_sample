@@ -3,7 +3,7 @@
 ## dependencies
 
 [dependencies]  
-tide = "0.11"  
+tide = "0.12"  
 tinytemplate = "1.1"  
 serde = "1.0"
 
