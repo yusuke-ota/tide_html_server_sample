@@ -112,13 +112,15 @@ mod test {
             Url::parse("http://localhost/hello_html").unwrap(),
         );
         let mut response: Response = app.respond(request).await.unwrap();
+        let separator = if cfg!(windows) { "\r\n" } else { "\n" };
+
         assert_eq!(response.status(), StatusCode::Ok);
         assert_eq!(
             &response
                 .body_string()
                 .await
                 .unwrap()
-                .split("\r\n")
+                .split(separator)
                 .collect::<Vec<&str>>(),
             &[
                 "<!DOCTYPE html>",
