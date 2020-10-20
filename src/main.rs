@@ -1,5 +1,5 @@
-use tide::{Body, http};
 use http::{mime, StatusCode};
+use tide::{http, Body};
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -38,7 +38,7 @@ async fn hello_html_from_template(req: tide::Request<()>) -> Result<tide::Respon
     // 'tide::Server.at(*/:name)' when routing in the form Get the value of :name.
     // :nameがある場合、&str.parse::<String> (= &str.to_string())は必ず成功する。
     // When ':name' is exist, '&str.parse::<String>' ('= &str. to_string()') always succeed.
-    let name = req.param::<String>("name")?;
+    let name = req.param("name")?.parse::<String>().unwrap();
 
     // Endpointにerrorが伝播するとResponse::new(StatusCode::InternalServerError)が返る
     // When the error is propagated to Endpoint, Response::new( StatusCode::InternalServerError) is returned.
@@ -62,17 +62,16 @@ struct Context {
     name: String,
 }
 
-const HTML_TEMPLATE: &'static str =
-"<!DOCTYPE html>
-<html lang=\"en\">
-    <head>
-        <meta charset=\"UTF-8\">
-        <title>Hello!</title>
-    </head>
-    <body>
-        <h1>Hello!</h1>
-        <p>Hi {name} from Rust</p>
-    </body>
+const HTML_TEMPLATE: &str = "<!DOCTYPE html>\r\n\
+<html lang=\"en\">\r\n\
+    <head>\r\n\
+        <meta charset=\"UTF-8\">\r\n\
+        <title>Hello!</title>\r\n\
+    </head>\r\n\
+    <body>\r\n\
+        <h1>Hello!</h1>\r\n\
+        <p>Hi {name} from Rust</p>\r\n\
+    </body>\r\n\
 </html>";
 
 pub fn generate_html(name: String) -> Result<String, Box<dyn Error>> {
@@ -85,78 +84,100 @@ pub fn generate_html(name: String) -> Result<String, Box<dyn Error>> {
     Ok(rendered)
 }
 
-use tide::http::{Method, Url, Request, Response};
+#[cfg(test)]
+mod test {
+    use crate::{hello, hello_html, hello_html_from_template, not_found};
+    use tide::http::{Method, Request, Response, StatusCode, Url};
 
-#[async_std::test]
-// test for endpoint hello
-async fn hello_test() {
-    let mut app = tide::new();
-    app.at("/").get(hello);
+    #[async_std::test]
+    // test for endpoint hello
+    async fn hello_test() {
+        let mut app = tide::new();
+        app.at("/").get(hello);
 
-    let request = Request::new(Method::Get, Url::parse("http://localhost/").unwrap());
-    let mut response: Response = app.respond(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::Ok);
-    assert_eq!(&response.body_string().await.unwrap(), "hello");
-}
+        let request = Request::new(Method::Get, Url::parse("http://localhost/").unwrap());
+        let mut response: Response = app.respond(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::Ok);
+        assert_eq!(&response.body_string().await.unwrap(), "hello");
+    }
 
-#[async_std::test]
-// test for endpoint hello_html
-async fn hello_html_test() {
-    let mut app = tide::new();
-    app.at("/hello_html").get(hello_html);
+    #[async_std::test]
+    // test for endpoint hello_html
+    async fn hello_html_test() {
+        let mut app = tide::new();
+        app.at("/hello_html").get(hello_html);
 
-    let request = Request::new(Method::Get, Url::parse("http://localhost/hello_html").unwrap());
-    let mut response: Response = app.respond(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::Ok);
-    assert_eq!(
-        &response.body_string().await.unwrap(),
-        "<!DOCTYPE html>
-<html lang=\"en\">
-    <head>
-        <meta charset=\"UTF-8\">
-        <title>Hello!</title>
-    </head>
-    <body>
-        <h1>Hello!</h1>
-        <p>Hi from Rust</p>
-    </body>
+        let request = Request::new(
+            Method::Get,
+            Url::parse("http://localhost/hello_html").unwrap(),
+        );
+        let mut response: Response = app.respond(request).await.unwrap();
+        let separator = if cfg!(windows) { "\r\n" } else { "\n" };
+
+        assert_eq!(response.status(), StatusCode::Ok);
+        assert_eq!(
+            &response
+                .body_string()
+                .await
+                .unwrap()
+                .split(separator)
+                .collect::<Vec<&str>>(),
+            &[
+                "<!DOCTYPE html>",
+                "<html lang=\"en\">",
+                "    <head>",
+                "        <meta charset=\"UTF-8\">",
+                "        <title>Hello!</title>",
+                "    </head>",
+                "    <body>",
+                "        <h1>Hello!</h1>",
+                "        <p>Hi from Rust</p>",
+                "    </body>",
+                "</html>"
+            ]
+        );
+    }
+
+    #[async_std::test]
+    // test for endpoint hello_html_from_template
+    async fn html_template_test() {
+        let mut app = tide::new();
+        app.at("/html_template/:name").get(hello_html_from_template);
+
+        let request = Request::new(
+            Method::Get,
+            Url::parse("http://localhost/html_template/my_name").unwrap(),
+        );
+        let mut response: Response = app.respond(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::Ok);
+        assert_eq!(
+            &response.body_string().await.unwrap(),
+            "<!DOCTYPE html>\r\n\
+<html lang=\"en\">\r\n\
+    <head>\r\n\
+        <meta charset=\"UTF-8\">\r\n\
+        <title>Hello!</title>\r\n\
+    </head>\r\n\
+    <body>\r\n\
+        <h1>Hello!</h1>\r\n\
+        <p>Hi my_name from Rust</p>\r\n\
+    </body>\r\n\
 </html>"
-    );
-}
+        );
+    }
 
-#[async_std::test]
-// test for endpoint hello_html_from_template
-async fn html_template_test() {
-    let mut app = tide::new();
-    app.at("/html_template/:name").get(hello_html_from_template);
+    #[async_std::test]
+    // test for endpoint not_found
+    async fn not_found_test() {
+        let mut app = tide::new();
+        app.at("/*").get(not_found);
 
-    let request = Request::new(Method::Get, Url::parse("http://localhost/html_template/my_name").unwrap());
-    let mut response: Response = app.respond(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::Ok);
-    assert_eq!(
-        &response.body_string().await.unwrap(),
-        "<!DOCTYPE html>
-<html lang=\"en\">
-    <head>
-        <meta charset=\"UTF-8\">
-        <title>Hello!</title>
-    </head>
-    <body>
-        <h1>Hello!</h1>
-        <p>Hi my_name from Rust</p>
-    </body>
-</html>"
-    );
-}
-
-#[async_std::test]
-// test for endpoint not_found
-async fn not_found_test() {
-    let mut app = tide::new();
-    app.at("/*").get(not_found);
-
-    let request = Request::new(Method::Get, Url::parse("http://localhost/undefined").unwrap());
-    let mut response: Response = app.respond(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::NotFound);
-    assert_eq!(&response.body_string().await.unwrap(), "Not Found");
+        let request = Request::new(
+            Method::Get,
+            Url::parse("http://localhost/undefined").unwrap(),
+        );
+        let mut response: Response = app.respond(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::NotFound);
+        assert_eq!(&response.body_string().await.unwrap(), "Not Found");
+    }
 }
