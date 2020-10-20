@@ -1,5 +1,5 @@
-use tide::{Body, http};
 use http::{mime, StatusCode};
+use tide::{http, Body};
 
 #[async_std::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -62,8 +62,7 @@ struct Context {
     name: String,
 }
 
-const HTML_TEMPLATE: &str =
-"<!DOCTYPE html>\r\n\
+const HTML_TEMPLATE: &str = "<!DOCTYPE html>\r\n\
 <html lang=\"en\">\r\n\
     <head>\r\n\
         <meta charset=\"UTF-8\">\r\n\
@@ -86,9 +85,9 @@ pub fn generate_html(name: String) -> Result<String, Box<dyn Error>> {
 }
 
 #[cfg(test)]
-mod test{
-    use tide::http::{Method, Url, Request, Response, StatusCode};
+mod test {
     use crate::{hello, hello_html, hello_html_from_template, not_found};
+    use tide::http::{Method, Request, Response, StatusCode, Url};
 
     #[async_std::test]
     // test for endpoint hello
@@ -103,16 +102,24 @@ mod test{
     }
 
     #[async_std::test]
-// test for endpoint hello_html
+    // test for endpoint hello_html
     async fn hello_html_test() {
         let mut app = tide::new();
         app.at("/hello_html").get(hello_html);
 
-        let request = Request::new(Method::Get, Url::parse("http://localhost/hello_html").unwrap());
+        let request = Request::new(
+            Method::Get,
+            Url::parse("http://localhost/hello_html").unwrap(),
+        );
         let mut response: Response = app.respond(request).await.unwrap();
         assert_eq!(response.status(), StatusCode::Ok);
         assert_eq!(
-            &response.body_string().await.unwrap().split("\r\n").collect::<Vec<&str>>(),
+            &response
+                .body_string()
+                .await
+                .unwrap()
+                .split("\r\n")
+                .collect::<Vec<&str>>(),
             &[
                 "<!DOCTYPE html>",
                 "<html lang=\"en\">",
@@ -130,12 +137,15 @@ mod test{
     }
 
     #[async_std::test]
-// test for endpoint hello_html_from_template
+    // test for endpoint hello_html_from_template
     async fn html_template_test() {
         let mut app = tide::new();
         app.at("/html_template/:name").get(hello_html_from_template);
 
-        let request = Request::new(Method::Get, Url::parse("http://localhost/html_template/my_name").unwrap());
+        let request = Request::new(
+            Method::Get,
+            Url::parse("http://localhost/html_template/my_name").unwrap(),
+        );
         let mut response: Response = app.respond(request).await.unwrap();
         assert_eq!(response.status(), StatusCode::Ok);
         assert_eq!(
@@ -160,7 +170,10 @@ mod test{
         let mut app = tide::new();
         app.at("/*").get(not_found);
 
-        let request = Request::new(Method::Get, Url::parse("http://localhost/undefined").unwrap());
+        let request = Request::new(
+            Method::Get,
+            Url::parse("http://localhost/undefined").unwrap(),
+        );
         let mut response: Response = app.respond(request).await.unwrap();
         assert_eq!(response.status(), StatusCode::NotFound);
         assert_eq!(&response.body_string().await.unwrap(), "Not Found");
